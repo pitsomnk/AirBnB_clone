@@ -5,6 +5,8 @@ This file defines the BaseModel class
 """
 import uuid
 from datetime import datetime
+import models
+
 
 class BaseModel:
     """Base class for all our classes"""
@@ -22,6 +24,9 @@ class BaseModel:
                     setattr(self, key, datetime.strptime(value, time_format))
                 else:
                     setattr(self, key, value)
+
+          models.storage.new(self)
+
         else:
          self.id = str(uuid.uuid4())
         # Set the creation and update timestamps to the current time
@@ -31,6 +36,7 @@ class BaseModel:
     def save(self):
         """Update the update timestamp"""
         self.updated_at = datetime.utcnow()
+        models.storage.save()
 
     def to_dict(self):
         """Convert the instance to a dictionary"""
