@@ -1,114 +1,62 @@
 #!/usr/bin/python3
 
 """
-This file defines  the BaseModel class
+This file defines the BaseModel class
 """
-from uuid import uuid4
+import uuid
 from datetime import datetime
-import models
-
 
 class BaseModel:
     """Base class for all our classes"""
 
-    def __init__(self, *args, **kwargs):
-        """ deserialize and serialize a class """
-
-        """initialize  if nothing is passed"""
-        if kwargs == {}:
-            self.id = str(uuid4())
-            self.created_at = datetime.utcnow()
-            self.updated_at = datetime.utcnow()
-            models.storage.new(self)
-            return
-
-        """using Key words (deserialize)"""
-        if 'id' not in kwargs:
-            kwargs['id'] = str(uuid4())
-        self.id = kwargs['id']
-
-        for Key, val in kwargs.items():
-            if Key == "__class_":
-                continue
-        if "created_at" in kwargs:
-            self.created_at = datetime.strptime(
-                    kwargs['created_at'],
-                    '%Y-%m-%dT%H:%M:%S.%f')
-        if "updated_at" in kwargs:
-            self.updated_at = datetime.strptime(
-                    kwargs['updated_at'],
-                    '%Y-%m-%dT%H:%M:%S.%f')
-
-    def __str__(self):
-        """overide str representation of self"""
-        fmt = "[{}] ({}) {}"
-        return fmt.format(
-                type(self).__name__,
-                self.id,
-                self.__dict__)
+    def __init__(self):
+        """Initialize a new instance of the class"""
+        # Generate a unique ID for the instance
+        self.id = str(uuid.uuid4())
+        # Set the creation and update timestamps to the current time
+        self.created_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
 
     def save(self):
-        """updates last updated variable"""
+        """Update the update timestamp"""
         self.updated_at = datetime.utcnow()
-        models.storage.save()
 
     def to_dict(self):
-        """Returns a dictionary representation of self"""
-        temp = {**self.__dict__}
-        temp['__class__'] = type(self).__name__
-        temp['created_at'] = self.created_at.strftime('%Y-%m-%dT%H:%M:%S.%f')
-        temp['updated_at'] = self.updated_at.strftime('%Y-%m-%dT%H:%M:%S.%f')
-        return temp
+        """Convert the instance to a dictionary"""
+        # Create a copy of the instance's attributes
+        inst_dict = self.__dict__.copy()
+        # Add the class name to the dictionary
+        inst_dict["__class__"] = self.__class__.__name__
+        # Convert the timestamps to ISO format
+        inst_dict["created_at"] = self.created_at.isoformat()
+        inst_dict["updated_at"] = self.updated_at.isoformat()
 
-    @classmethod
-    def all(cls):
-        """Retrieve all current instances of cls"""
-        return models.storage.find_all(cls.__name__)
+        return inst_dict
 
-    @classmethod
-    def count(cls):
-        """Get the number of all current instances of cls"""
-        return len(models.storage.find_all(cls.__name__))
+    def __str__(self):
+        """Return a string representation of the instance"""
+        class_name = self.__class__.__name__
+        return "[{}] ({}) {}".format(class_name, self.id, self.__dict__)
 
-    @classmethod
-    def create(cls, *args, **kwargs):
-        """Creates an Instance"""
-        new = cls(*args, **kwargs)
-        return new.id
+if __name__ == "__main__":
+    # Create a new instance of the BaseModel class
+    my_model = BaseModel()
+    # Set some additional attributes
+    my_model.name = "My_First_Model"
+    my_model.my_number = 89
 
-    @classmethod
-    def show(cls, instance_id):
-        """Retrieve an instance"""
-        return models.storage.find_by_id(
-            cls.__name__,
-            instance_id
-        )
+    # Print the instance's ID and string representation
+    print(my_model.id)
+    print(my_model)
 
-    @classmethod
-    def destroy(cls, instance_id):
-        """Deletes an instance"""
-        return models.storage.delete_by_id(
-            cls.__name__,
-            instance_id
-        )
+    # Print the type of the creation timestamp
+    print(type(my_model.created_at))
 
-    @classmethod
-    def update(cls, instance_id, *args):
-        """Updates an instance
-        if args has one elem and its a dict:
-        it updates by key value
-        else:
-        updates by first being key and second being value"""
-        if not len(args):
-            print("** attribute name missing **")
-            return
-        if len(args) == 1 and isinstance(args[0], dict):
-            args = args[0].items()
-        else:
-            args = [args[:2]]
-        for arg in args:
-            models.storage.update_one(
-                cls.__name__,
-                instance_id,
-                *arg
-            )
+    # Convert the instance to a dictionary and print it
+    my_model_json = my_model.to_dict()
+    print(my_model_json)
+
+    # Print the dictionary's keys and values
+    print("JSON of my_model:")
+    for key in my_model_json.keys():
+        print("\t{}: ({}) - {}".format(key, type(my_model_json[key]), my_model_json[key]))
