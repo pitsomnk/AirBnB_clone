@@ -9,13 +9,24 @@ from datetime import datetime
 class BaseModel:
     """Base class for all our classes"""
 
-    def __init__(self):
+    def __init__(self,*args, **kwargs):
         """Initialize a new instance of the class"""
         # Generate a unique ID for the instance
-        self.id = str(uuid.uuid4())
+        time_format = "%Y-%m-%dT%H:%M:%S.%f"
+
+        if kwargs:
+          for key, value in kwargs.items():
+                if key == "__class__":
+                    continue
+                elif key == "created_at" or key == "updated_at":
+                    setattr(self, key, datetime.strptime(value, time_format))
+                else:
+                    setattr(self, key, value)
+        else:
+         self.id = str(uuid.uuid4())
         # Set the creation and update timestamps to the current time
-        self.created_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+         self.created_at = datetime.utcnow()
+         self.updated_at = datetime.utcnow()
 
     def save(self):
         """Update the update timestamp"""
